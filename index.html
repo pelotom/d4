@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script src='bower_components/d3/d3.js' charset='utf-8'></script>
+<script src='bower_components/jquery/jquery.js' charset='utf-8'></script>
+<script src='d4.js' charset='utf-8'></script>
+<script>
+
+var layers = { elem: 'g' };
+var row = { elem: 'g' };
+var chart = { elem: 'g' };
+
+var composite = {
+  elem: 'svg',
+  id: function(d) { return d.id; },
+  merge: function(d) {
+    this.attr('viewBox', '0 0 ' + d.width + ' ' + d.height);
+  },
+  children: [
+    {
+      data: function(d) { return d.layers; },
+      figure: layer
+    },
+    {
+      data: function(d) { return d.rows; },
+      figure: row
+    },
+    {
+      data: function(d) { return d.charts; },
+      figure: chart
+    }
+  ]
+};
+
+d4.draw(composite);
+
+</script>
+</body>
+</html>

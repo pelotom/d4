@@ -1,0 +1,21 @@
+{
+  "name": "d4",
+  "main": "d4.js",
+  "version": "0.0.0",
+  "authors": [
+    "Tom Crockett <pelotom@gmail.com>"
+  ],
+  "description": "Declarative Data-Driven Documents",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "~3.3.9",
+    "jquery": "~2.0.3"
+  }
+}
