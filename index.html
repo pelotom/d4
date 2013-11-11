@@ -38,23 +38,7 @@ var rowSpec = {
   enter: function(g, row) {
     g.attr('transform', 'translate(0,' + row.offset + ')');
   },
-  children: [
-    // background
-    {
-      spec: {
-        type: 'rect',
-        enter: function(rect, row) {
-          rect
-            .attr('width', $(window).width())
-            .attr('height', 2)
-            .attr('fill', row.color);
-        }
-      }
-    },
-    {
-      spec: mainSpec
-    }
-  ]
+  children: [{ spec: mainSpec }]
 };
 
 function mainSpec() {
@@ -96,7 +80,7 @@ chart.draw([{
   boxes: bunch,
   rows: [
     {
-      offset: 250,
+      offset: 500,
       boxes: [
         {
           bounds: [200,150,100,45],
