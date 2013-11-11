@@ -20,7 +20,32 @@ var boxSpec = {
   }
 }
 
-var chart = d4.build({
+var rowSpec = {
+  type: 'g',
+  enter: function(g, row) {
+    g.attr('transform', 'translate(0,' + row.offset + ')');
+  },
+  children: [
+    // background
+    {
+      spec: {
+        type: 'rect',
+        enter: function(rect, row) {
+          rect
+            .attr('width', $(window).width())
+            .attr('height', 40)
+            .attr('fill', row.color);
+        }
+      }
+    },
+    {
+      data: function(d) { return d.boxes || []; },
+      spec: boxSpec
+    }
+  ]
+};
+
+var mainSpec = {
   type: 'svg',
   key: function(d) { return d.id; },
   merge: function(svg, d, i) {
@@ -33,36 +58,46 @@ var chart = d4.build({
   children: [
     {
       data: function(d) { return d.rows || []; },
-      spec: {
-        type: 'g',
-        children: [{
-          data: function(d) { return d.boxes || []; },
-          spec: boxSpec
-        }]
-      }
+      spec: rowSpec
     },
     {
       data: function(d) { return d.boxes || []; },
       spec: boxSpec
     }
   ]
-});
+};
+
+var chart = d4.build(mainSpec);
 
 chart.draw(d3.select('body'), [{
   width: $(window).width() - 30,
   height: $(window).height() - 30,
   boxes: [
     {
-      type: 'box',
       bounds: [200,150,100,45],
       color: 'red'
     },
     {
-      type: 'box',
-      bounds: [600,300,10,19],
+      bounds: [600,100,10,19],
       color: 'blue'
     }
-  ]
+  ],
+  rows: [
+    {
+      offset: 250,
+      boxes: [
+        {
+          bounds: [200,150,100,45],
+          color: 'red'
+        },
+        {
+          bounds: [600,100,10,19],
+          color: 'blue'
+        }
+      ],
+      color: 'gray'
+    }
+  ],
 }]);
 
 </script>

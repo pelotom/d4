@@ -16,16 +16,21 @@ var idCounter = 0;
 
 function Figure(spec) {
 
+  var self = this;
+
   var figureId = 'figure-' + (idCounter++);
 
   spec = _.extend({}, defaultSpec(spec.type), spec);
 
   function draw(parent, data) {
+    // If no data specified, use the same data as the parent
+    data = data || function(data) { return [data]; };
+
     var sel = parent.selectAll(spec.type + '.' + figureId).data(data, spec.key);
 
     function doPhase(phase, sel) {
       return sel.each(function(d, i) {
-        spec[phase](d3.select(this), d, i);
+        spec[phase].call(self, d3.select(this), d, i);
       });
     }
 
