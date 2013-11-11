@@ -67,9 +67,9 @@ var mainSpec = {
   ]
 };
 
-var chart = d4.build(mainSpec);
+var chart = d4.build(d3.select('body'), mainSpec);
 
-chart.draw(d3.select('body'), [{
+chart.draw([{
   width: $(window).width() - 30,
   height: $(window).height() - 30,
   boxes: [

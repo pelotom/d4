@@ -14,7 +14,7 @@ function defaultSpec(type) {
 
 var idCounter = 0;
 
-function Figure(spec) {
+function Figure(parent, spec) {
 
   var self = this;
 
@@ -22,7 +22,7 @@ function Figure(spec) {
 
   spec = _.extend({}, defaultSpec(spec.type), spec);
 
-  function draw(parent, data) {
+  function draw(data) {
     // If no data specified, use the same data as the parent
     data = data || function(data) { return [data]; };
 
@@ -41,7 +41,7 @@ function Figure(spec) {
     doPhase('exit', sel.exit()).remove();
 
     spec.children.forEach(function (childGroup) {
-      d4.build(childGroup.spec).draw(sel, childGroup.data);
+      d4.build(sel, childGroup.spec).draw(childGroup.data);
     });
   };
 
@@ -49,7 +49,7 @@ function Figure(spec) {
 }
 
 return {
-  build: function(spec) { return new Figure(spec); }
+  build: function(parent, spec) { return new Figure(parent, spec); }
 };
 
 })();
