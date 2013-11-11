@@ -52,32 +52,33 @@ var rowSpec = {
       }
     },
     {
-      data: function(d) { return d.boxes || []; },
-      spec: boxSpec
+      spec: mainSpec
     }
   ]
 };
 
-var mainSpec = {
-  type: 'svg',
-  key: function(d) { return d.id; },
-  merge: function(svg, d, i) {
-    svg
-      .attr('width', d.width)
-      .attr('height', d.height)
-      .style('background-color', 'green')
-      ;
-  },
-  children: [
-    {
-      data: function(d) { return d.rows || []; },
-      spec: rowSpec
+function mainSpec() {
+  return {
+    type: 'svg',
+    key: function(d) { return d.id; },
+    merge: function(svg, d, i) {
+      svg
+        .attr('width', d.width)
+        .attr('height', d.height)
+        .style('background-color', 'green')
+        ;
     },
-    {
-      data: function(d) { return d.boxes || []; },
-      spec: boxSpec
-    }
-  ]
+    children: [
+      {
+        data: function(d) { return d.rows || []; },
+        spec: rowSpec
+      },
+      {
+        data: function(d) { return d.boxes || []; },
+        spec: boxSpec
+      }
+    ]
+  };
 };
 
 var chart = d4.build(d3.select('body'), mainSpec);

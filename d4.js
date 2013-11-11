@@ -20,6 +20,8 @@ function Figure(parent, spec) {
 
   var figureId = 'figure-' + (idCounter++);
 
+  if (_.isFunction(spec))
+    spec = spec();
   spec = _.extend({}, defaultSpec(spec.type), spec);
 
   function draw(data) {
@@ -39,9 +41,11 @@ function Figure(parent, spec) {
     doPhase('merge', sel);
     doPhase('exit', sel.exit()).remove();
 
-    spec.children.forEach(function (childGroup) {
-      d4.build(sel, childGroup.spec).draw(childGroup.data);
-    });
+    if (!sel.empty()) {
+      spec.children.forEach(function (childGroup) {
+        d4.build(sel, childGroup.spec).draw(childGroup.data);
+      });
+    }
   };
 
   this.draw = draw;
