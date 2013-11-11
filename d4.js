@@ -35,8 +35,7 @@ function Figure(parent, spec) {
     }
 
     doPhase('update', sel);
-    var enter = sel.enter().append(spec.type).classed(figureId, true);
-    doPhase('enter', enter);
+    doPhase('enter', sel.enter().append(spec.type).classed(figureId, true));
     doPhase('merge', sel);
     doPhase('exit', sel.exit()).remove();
 
