@@ -3,36 +3,67 @@
 <body>
 <script src='bower_components/d3/d3.js' charset='utf-8'></script>
 <script src='bower_components/jquery/jquery.js' charset='utf-8'></script>
+<script src='bower_components/lodash/dist/lodash.js' charset='utf-8'></script>
 <script src='d4.js' charset='utf-8'></script>
 <script>
 
-var layers = { elem: 'g' };
-var row = { elem: 'g' };
-var chart = { elem: 'g' };
+var boxSpec = {
+  type: 'rect',
+  merge: function(rect, d, i) {
+    rect
+      .attr('x', d.bounds[0])
+      .attr('y', d.bounds[1])
+      .attr('width', d.bounds[2])
+      .attr('height', d.bounds[3])
+      .attr('fill', d.color)
+      ;
+  }
+}
 
-var composite = {
-  elem: 'svg',
-  id: function(d) { return d.id; },
-  merge: function(d) {
-    this.attr('viewBox', '0 0 ' + d.width + ' ' + d.height);
+var chart = d4.build({
+  type: 'svg',
+  key: function(d) { return d.id; },
+  merge: function(svg, d, i) {
+    svg
+      .attr('width', d.width)
+      .attr('height', d.height)
+      .style('background-color', 'green')
+      ;
   },
   children: [
     {
-      data: function(d) { return d.layers; },
-      figure: layer
+      data: function(d) { return d.rows || []; },
+      spec: {
+        type: 'g',
+        children: [{
+          data: function(d) { return d.boxes || []; },
+          spec: boxSpec
+        }]
+      }
     },
     {
-      data: function(d) { return d.rows; },
-      figure: row
-    },
-    {
-      data: function(d) { return d.charts; },
-      figure: chart
+      data: function(d) { return d.boxes || []; },
+      spec: boxSpec
     }
   ]
-};
+});
 
-d4.draw(composite);
+chart.draw(d3.select('body'), [{
+  width: $(window).width() - 30,
+  height: $(window).height() - 30,
+  boxes: [
+    {
+      type: 'box',
+      bounds: [200,150,100,45],
+      color: 'red'
+    },
+    {
+      type: 'box',
+      bounds: [600,300,10,19],
+      color: 'blue'
+    }
+  ]
+}]);
 
 </script>
 </body>
