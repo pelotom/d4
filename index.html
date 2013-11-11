@@ -9,13 +9,26 @@
 
 var boxSpec = {
   type: 'rect',
+  enter: function(rect, d) {
+    rect
+      .attr('x', d.bounds[0])
+      .attr('y', d.bounds[1])
+      .attr('width', 0)
+      .attr('height', d.bounds[3])
+      .attr('fill', d.color)
+      .attr('opacity', 0)
+      ;
+  },
   merge: function(rect, d, i) {
     rect
+      .transition()
+      .duration(1000)
       .attr('x', d.bounds[0])
       .attr('y', d.bounds[1])
       .attr('width', d.bounds[2])
       .attr('height', d.bounds[3])
       .attr('fill', d.color)
+      .attr('opacity', 1)
       ;
   }
 }
@@ -33,7 +46,7 @@ var rowSpec = {
         enter: function(rect, row) {
           rect
             .attr('width', $(window).width())
-            .attr('height', 40)
+            .attr('height', 2)
             .attr('fill', row.color);
         }
       }
@@ -69,19 +82,17 @@ var mainSpec = {
 
 var chart = d4.build(d3.select('body'), mainSpec);
 
+var bunch = _.map(_.range(1000), function (n) {
+  return {
+    bounds: [n/3,n/2,n,0.4],
+    color: 'red'
+  };
+})
+
 chart.draw([{
   width: $(window).width() - 30,
   height: $(window).height() - 30,
-  boxes: [
-    {
-      bounds: [200,150,100,45],
-      color: 'red'
-    },
-    {
-      bounds: [600,100,10,19],
-      color: 'blue'
-    }
-  ],
+  boxes: bunch,
   rows: [
     {
       offset: 250,
