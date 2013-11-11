@@ -10,7 +10,7 @@
 var boxSpec = {
   type: 'rect',
   enter: function(rect, d) {
-    rect
+    return rect
       .attr('x', d.bounds[0])
       .attr('y', d.bounds[1])
       .attr('width', 0)
@@ -19,8 +19,8 @@ var boxSpec = {
       .attr('opacity', 0)
       ;
   },
-  merge: function(rect, d, i) {
-    rect
+  merge: function(rect, d) {
+    return rect
       .transition()
       .duration(1000)
       .attr('x', d.bounds[0])
@@ -30,8 +30,61 @@ var boxSpec = {
       .attr('fill', d.color)
       .attr('opacity', 1)
       ;
+  },
+  exit: function(rect, d) {
+    return rect
+      .transition()
+      .duration(500)
+      .attr('x', d.bounds[0])
+      .attr('width', 0)
+      .attr('opacity', 0)
+      ;
   }
-}
+};
+
+var ellipseSpec = {
+  type: 'ellipse',
+  enter: function(rect, d) {
+    var rx = 0;
+    var ry = d.bounds[3] / 2;
+    return rect
+      .attr('cx', d.bounds[0] + rx)
+      .attr('cy', d.bounds[1] + ry)
+      .attr('rx', rx)
+      .attr('ry', ry)
+      .attr('fill', d.color)
+      .attr('opacity', 0)
+      ;
+  },
+  merge: function(rect, d) {
+    var rx = d.bounds[2] / 2;
+    var ry = d.bounds[3] / 2;
+    return rect
+      .transition()
+      .duration(1000)
+      .attr('cx', d.bounds[0] + rx)
+      .attr('cy', d.bounds[1] + ry)
+      .attr('rx', rx)
+      .attr('ry', ry)
+      .attr('fill', d.color)
+      .attr('opacity', 1)
+      ;
+  },
+};
+
+var polySpec = {
+  type: 'g',
+  children: [
+    {
+      data: function (d) { if (d.type === 'rect') return [d]; },
+      spec: boxSpec
+    },
+    {
+      data: function (d) { if (d.type === 'ellipse') return [d]; },
+      spec: ellipseSpec
+    }
+  ]
+};
 
 var rowSpec = {
   type: 'g',
@@ -46,7 +99,7 @@ function mainSpec() {
     type: 'svg',
     key: function(d) { return d.id; },
     merge: function(svg, d, i) {
-      svg
+      return svg
         .attr('width', d.width)
         .attr('height', d.height)
         .style('background-color', d.bg)
@@ -60,6 +113,10 @@ function mainSpec() {
       {
         data: function(d) { return d.boxes || []; },
         spec: boxSpec
+      },
+      {
+        data: function(d) { return d.poly || []; },
+        spec: polySpec
       }
     ]
   };
@@ -69,33 +126,44 @@ var chart = d4.build(d3.select('body'), mainSpec);
 
 var bunch = _.map(_.range(200), function (n) {
   return {
-    bounds: [n/3,3.2*n,n*2,2],
+    bounds: [n/3,3.7*n,n*4,2],
     color: 'red'
   };
 })
 
-chart.draw([{
+var data = {
   width: $(window).width() - 30,
   height: $(window).height() - 30,
   bg: 'gray',
   boxes: bunch,
   rows: [
     {
-      offset: 500,
-      boxes: [
+      offset: 50,
+      poly: [
         {
+          type: 'rect',
           bounds: [200,150,100,45],
           color: 'red'
         },
         {
-          bounds: [600,100,10,19],
+          type: 'rect',
+          bounds: [600,100,200,19],
           color: 'blue'
         }
       ],
       color: 'gray'
     }
   ],
-}]);
+};
+
+chart.draw([data]);
+
+setTimeout(function () {
+  var shape = data.rows[0].poly[0];
+  shape.type = 'ellipse';
+  shape.bounds[0] += 200;
+  chart.draw([data]);
+}, 2000);
 
 </script>
 </body>
