@@ -11,7 +11,7 @@ function shallowCopy(obj) {
 
 function isFunction(f) { return typeof f === 'function'; }
 
-function isUndefined(u) { return typeof u === 'undefined;'; }
+function isUndefined(u) { return typeof u === 'undefined'; }
 
 function Spec(elemType, fields) {
   var self = this;
