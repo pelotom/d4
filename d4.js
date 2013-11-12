@@ -1,5 +1,36 @@
 var d4 = (function () {
 
+function shallowCopy(obj) {
+  var clone = {};
+  for (var p in obj)
+    clone[p] = obj[p];
+  return clone;
+}
+
+function Spec(fields) {
+  var self = this;
+
+  function addBuilder(field) {
+    self[field] = function() {
+      var newFields = shallowCopy(fields);
+      newFields[field] = (newFields[field] || []).concat([Array.prototype.slice.call(arguments)]);
+      return new Spec(newFields);
+    };
+  }
+
+  // Add chainable setters for simple fields
+  addBuilder('id');
+  addBuilder('enter');
+  addBuilder('update');
+  addBuilder('merge');
+  addBuilder('exit');
+  addBuilder('children');
+
+  this.fields = function() {
+    return fields;
+  };
+}
+
 function identity(x) { return x; }
 
 function defaultSpec(type) {
@@ -53,7 +84,17 @@ function draw(parent, spec, data, path) {
 }
 
 return {
-  draw: function(parent, spec, data) { draw(parent, spec, data, 'd4'); }
+  draw: function(parent, spec, data) { draw(parent, spec, data, 'd4'); },
+  spec: function(elemType) {
+    return new Spec({
+      type: [[elemType]],
+      // defaults
+      update: [[identity]],
+      merge: [[identity]],
+      enter: [[identity]],
+      exit: [[identity]]
+    });
+  }
 };
 
 })();
