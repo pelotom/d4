@@ -51,17 +51,18 @@ function Spec(elemType, fields) {
 
   function render(parent, data, path) {
 
-    // If no data specified, use the same data as the parent
     if (isFunction(data)) {
-      // allow data functions to be partial, treating undefined as []
+      // Allow data functions to be partial, treating undefined as []
       var f = data;
       data = function(d) {
         if (isUndefined(d = f(d)))
           return [];
         return d;
       };
-    } else
-      data = data || function(data) { return [data]; };
+    } else if (!data) {
+      // If no data specified, inherit data from the parent
+      data = function(data) { return [data]; };
+    }
 
     var sel = parent.selectAll(elemType + '.' + path).data(data, lastSetting('key'));
 
@@ -84,7 +85,7 @@ function Spec(elemType, fields) {
         var childData = childGroup[1];
         
         if (isFunction(childSpec))
-          // force lazy specs here
+          // Force lazy specs here
           childSpec = childSpec();
 
         childSpec.render(sel, childData, path + '-' + childIndex)
