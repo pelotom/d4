@@ -12,54 +12,48 @@ function defaultSpec(type) {
   };
 }
 
-function Figure(parent, spec, figureId) {
-
-  var self = this;
+function draw(parent, spec, data, path) {
 
   if (_.isFunction(spec))
     spec = spec();
   spec = _.extend({}, defaultSpec(spec.type), spec);
 
-  function draw(data) {
-    // If no data specified, use the same data as the parent
-    if (_.isFunction(data)) {
-      // allow data functions to be partial, treating undefined as []
-      var f = data;
-      data = function(d) {
-        if (_.isUndefined(d = f(d)))
-          return [];
-        return d;
-      };
-    } else
-      data = data || function(data) { return [data]; };
+  // If no data specified, use the same data as the parent
+  if (_.isFunction(data)) {
+    // allow data functions to be partial, treating undefined as []
+    var f = data;
+    data = function(d) {
+      if (_.isUndefined(d = f(d)))
+        return [];
+      return d;
+    };
+  } else
+    data = data || function(data) { return [data]; };
 
-    var sel = parent.selectAll(spec.type + '.' + figureId).data(data, spec.key);
+  var sel = parent.selectAll(spec.type + '.' + path).data(data, spec.key);
 
-    function doPhase(phase, sel) {
-      var resultSels = [];
-      sel.each(function(d, i) {
-        resultSels.push(spec[phase].call(self, d3.select(this), d, i));
-      });
-      return resultSels;
-    }
+  function doPhase(phase, sel) {
+    var resultSels = [];
+    sel.each(function(d, i) {
+      resultSels.push(spec[phase].call(self, d3.select(this), d, i));
+    });
+    return resultSels;
+  }
 
-    doPhase('update', sel);
-    doPhase('enter', sel.enter().append(spec.type).classed(figureId, true));
-    doPhase('merge', sel);
-    doPhase('exit', sel.exit()).forEach(function (sel) { sel.remove(); });
+  doPhase('update', sel);
+  doPhase('enter', sel.enter().append(spec.type).classed(path, true));
+  doPhase('merge', sel);
+  doPhase('exit', sel.exit()).forEach(function (sel) { sel.remove(); });
 
-    if (!sel.empty()) {
-      spec.children.forEach(function (childGroup, childIndex) {
-        new Figure(sel, childGroup.spec, figureId + '-' + childIndex).draw(childGroup.data);
-      });
-    }
-  };
-
-  this.draw = draw;
+  if (!sel.empty()) {
+    spec.children.forEach(function (childGroup, childIndex) {
+      draw(sel, childGroup.spec, childGroup.data, path + '-' + childIndex)
+    });
+  }
 }
 
 return {
-  build: function(parent, spec) { return new Figure(parent, spec, 'figure'); }
+  draw: function(parent, spec, data) { draw(parent, spec, data, 'd4'); }
 };
 
 })();

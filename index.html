@@ -122,8 +122,6 @@ function mainSpec() {
   };
 };
 
-var chart = d4.build(d3.select('body'), mainSpec);
-
 var bunch = _.map(_.range(200), function (n) {
   return {
     bounds: [n/3,3.7*n,n*4,2],
@@ -156,13 +154,13 @@ var data = {
   ],
 };
 
-chart.draw([data]);
+d4.draw(d3.select('body'), mainSpec, [data]);
 
 setTimeout(function () {
   var shape = data.rows[0].poly[0];
   shape.type = 'ellipse';
   shape.bounds[0] += 200;
-  chart.draw([data]);
+  d4.draw(d3.select('body'), mainSpec, [data]);
 }, 2000);
 
 </script>
