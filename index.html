@@ -44,25 +44,19 @@ var tableData = [
   ['merg', 'samsonite', 'luggage']
 ];
 
-var tableSpec = 
-  d4.spec('table')
-    .children(
-      d4.spec('tr').children(
-        d4.spec('th').merge(function (th, d) { return th.html(d); })
-      ),
-      function (rows) { return [rows[0]]; }
-    )
-    .children(
-      d4.spec('tr').children(
-        d4.spec('td').merge(function (td, d) { return td.html(d); })
-      ),
-      function (rows) { return rows.slice(1); }
-    )
-    ;
+var tableSpec = d4('table')
+  .children(
+    d4('tr').children(
+      d4('th').merge(function (th, d) { return th.html(d); })
+    ), function (rows) { return [rows[0]]; })
+  .children(
+    d4('tr').children(
+      d4('td').merge(function (td, d) { return td.html(d); })
+    ), function (rows) { return rows.slice(1); });
 
 tableSpec.render(barDiv, [tableData]);
 
-var boxSpec = d4.spec('rect')
+var boxSpec = d4('rect')
   .enter(function (rect, d) {
     return rect
       .attr('x', d.bounds[0])
@@ -75,7 +69,7 @@ var boxSpec = d4.spec('rect')
   })
   ;
 
-var ellipSpec = d4.spec('ellipse')
+var ellipSpec = d4('ellipse')
   .enter(function(ellipse, d) {
     return ellipse
       .attr('fill', d.color)
@@ -97,7 +91,7 @@ var ellipSpec = d4.spec('ellipse')
   })
   ;
 
-var diagram = d4.spec('svg')
+var diagram = d4('svg')
   .child(boxSpec)
   .child(ellipSpec)
   ;
@@ -107,7 +101,7 @@ var data = {
   color: 'blue'
 };
 
-var fooDiv = d3.select('body').append('foo');
+var fooDiv = d3.select('body').append('div');
 
 diagram.render(fooDiv, [data]);
 

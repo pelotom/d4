@@ -106,8 +106,8 @@ function Spec(elemType, fields) {
   };
 }
 
-return {
-  spec: function(elemType) { return new Spec(elemType); }
+return function(elemType) {
+  return new Spec(elemType);
 };
 
 })();
