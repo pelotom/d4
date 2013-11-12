@@ -1,5 +1,34 @@
 <!DOCTYPE html>
 <html>
+<head>
+<style>
+
+table {
+  position: absolute;
+  height: 98%;
+  width: 99%;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+table, td, th {
+  border:1px solid green;
+}
+
+th {
+  background-color:green;
+  color:white;
+}
+
+</style>
+</head>
 <body>
 <script src='bower_components/d3/d3.js' charset='utf-8'></script>
 <script src='bower_components/jquery/jquery.js' charset='utf-8'></script>
@@ -7,59 +36,49 @@
 <script src='d4.js' charset='utf-8'></script>
 <script>
 
-var boxSpec = {
-  type: 'rect',
-  enter: function(rect, d) {
+var barDiv = d3.select('body').append('div');
+
+var tableData = [
+  ['here', 'is',        'johnny'],
+  ['blah', 'bloop',     'blee'],
+  ['merg', 'samsonite', 'luggage']
+];
+
+var tableSpec = d4('table')
+  .children(
+    d4('tr').children(
+      d4('th').merge(function (th, d) { return th.html(d); })
+    ), function (rows) { return [rows[0]]; })
+  .children(
+    d4('tr').children(
+      d4('td').merge(function (td, d) { return td.html(d); })
+    ), function (rows) { return rows.slice(1); });
+
+tableSpec.render(barDiv, [tableData]);
+
+var boxSpec = d4('rect')
+  .enter(function (rect, d) {
     return rect
-      .attr('x', d.bounds[0])
-      .attr('y', d.bounds[1])
-      .attr('width', 0)
-      .attr('height', d.bounds[3])
-      .attr('fill', d.color)
-      .attr('opacity', 0)
-      ;
-  },
-  merge: function(rect, d) {
-    return rect
-      .transition()
-      .duration(1000)
       .attr('x', d.bounds[0])
       .attr('y', d.bounds[1])
       .attr('width', d.bounds[2])
       .attr('height', d.bounds[3])
       .attr('fill', d.color)
-      .attr('opacity', 1)
+      .attr('opacity', 0.5)
       ;
-  },
-  exit: function(rect, d) {
-    return rect
-      .transition()
-      .duration(500)
-      .attr('x', d.bounds[0])
-      .attr('width', 0)
-      .attr('opacity', 0)
-      ;
-  }
-};
+  })
+  ;
 
-var ellipseSpec = {
-  type: 'ellipse',
-  enter: function(rect, d) {
-    var rx = 0;
-    var ry = d.bounds[3] / 2;
-    return rect
-      .attr('cx', d.bounds[0] + rx)
-      .attr('cy', d.bounds[1] + ry)
-      .attr('rx', rx)
-      .attr('ry', ry)
+var ellipSpec = d4('ellipse')
+  .enter(function(ellipse, d) {
+    return ellipse
       .attr('fill', d.color)
-      .attr('opacity', 0)
       ;
-  },
-  merge: function(rect, d) {
+  })
+  .merge(function(ellipse, d) {
     var rx = d.bounds[2] / 2;
     var ry = d.bounds[3] / 2;
-    return rect
+    return ellipse
       .transition()
       .duration(1000)
       .attr('cx', d.bounds[0] + rx)
@@ -67,100 +86,36 @@ var ellipseSpec = {
       .attr('rx', rx)
       .attr('ry', ry)
       .attr('fill', d.color)
-      .attr('opacity', 1)
+      .attr('opacity', 0.3)
       ;
-  },
-};
+  })
+  ;
 
-var polySpec = {
-  type: 'g',
-  children: [
-    {
-      data: function (d) { if (d.type === 'rect') return [d]; },
-      spec: boxSpec
-    },
-    {
-      data: function (d) { if (d.type === 'ellipse') return [d]; },
-      spec: ellipseSpec
-    }
-  ]
-};
-
-var rowSpec = {
-  type: 'g',
-  enter: function(g, row) {
-    g.attr('transform', 'translate(0,' + row.offset + ')');
-  },
-  children: [{ spec: mainSpec }]
-};
-
-function mainSpec() {
-  return {
-    type: 'svg',
-    key: function(d) { return d.id; },
-    merge: function(svg, d, i) {
-      return svg
-        .attr('width', d.width)
-        .attr('height', d.height)
-        .style('background-color', d.bg)
-        ;
-    },
-    children: [
-      {
-        data: function(d) { return d.rows || []; },
-        spec: rowSpec
-      },
-      {
-        data: function(d) { return d.boxes || []; },
-        spec: boxSpec
-      },
-      {
-        data: function(d) { return d.poly || []; },
-        spec: polySpec
-      }
-    ]
-  };
-};
-
-var bunch = _.map(_.range(200), function (n) {
-  return {
-    bounds: [n/3,3.7*n,n*4,2],
-    color: 'red'
-  };
-})
+var diagram = d4('svg')
+  .child(boxSpec)
+  .child(ellipSpec)
+  ;
 
 var data = {
-  width: $(window).width() - 30,
-  height: $(window).height() - 30,
-  bg: 'gray',
-  boxes: bunch,
-  rows: [
-    {
-      offset: 50,
-      poly: [
-        {
-          type: 'rect',
-          bounds: [200,150,100,45],
-          color: 'red'
-        },
-        {
-          type: 'rect',
-          bounds: [600,100,200,19],
-          color: 'blue'
-        }
-      ],
-      color: 'gray'
-    }
-  ],
+  bounds: [200,150,100,45],
+  color: 'blue'
 };
 
-d4.draw(d3.select('body'), mainSpec, [data]);
+var fooDiv = d3.select('body').append('div');
+
+diagram.render(fooDiv, [data]);
 
 setTimeout(function () {
-  var shape = data.rows[0].poly[0];
-  shape.type = 'ellipse';
-  shape.bounds[0] += 200;
-  d4.draw(d3.select('body'), mainSpec, [data]);
+  data.bounds[0] += 200;
+  data.bounds[1] += 50;
+  data.bounds[2] += 400;
+  data.bounds[3] += 100;
+  data.color = 'red';
+  diagram.render(fooDiv, [data]);
+
+  tableData[1][1] = 'TWIST!';
+  tableSpec.render(barDiv, [tableData]);
+
 }, 2000);
 
 </script>
