@@ -30,9 +30,21 @@ th {
 </style>
 </head>
 <body>
-<script src='bower_components/d3/d3.js' charset='utf-8'></script>
-<script src='d4.js' charset='utf-8'></script>
+<script src='bower_components/requirejs/require.js' charset='utf-8'></script>
 <script>
+
+requirejs.config({
+  baseUrl: './',
+  paths: {
+    d3: 'bower_components/d3/d3'
+  },
+  shim: {
+    d3: { exports: 'd3' }
+  },
+  waitSeconds: 5
+});
+
+require(['d3', 'd4'], function(d3, d4) {
 
 var barDiv = d3.select('body').append('div');
 
@@ -115,6 +127,8 @@ setTimeout(function () {
   tableSpec.render(barDiv, [tableData]);
 
 }, 2000);
+
+});
 
 </script>
 </body>

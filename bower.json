@@ -16,5 +16,8 @@
   ],
   "dependencies": {
     "d3": "~3.3.9"
+  },
+  "devDependencies": {
+    "requirejs": "~2.1.9"
   }
 }

@@ -1,4 +1,13 @@
-var d4 = (function () {
+// UMD boilerplate
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['d3'], factory);
+    } else {
+        // Browser globals
+        root.d4 = factory(root.d3);
+    }
+}(this, function (d3) {
 
 function identity(x) { return x; }
 
@@ -110,4 +119,4 @@ return function(elemType) {
   return new Spec(elemType);
 };
 
-})();
+}));
