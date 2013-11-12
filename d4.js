@@ -66,7 +66,7 @@ function Spec(elemType, fields) {
       };
     }
 
-    var sel = parent.selectAll(elemType + '.' + path).data(data, lastSetting('key'));
+    var sel = parent.selectAll('.' + path).data(data, lastSetting('key'));
 
     function doPhase(phase, sel) {
       var resultSels = [];
