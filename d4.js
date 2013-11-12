@@ -110,8 +110,8 @@ function Spec(elemType, fields) {
     }
   }
 
-  this.render = function(parent, data, path) {
-    render(parent, data, path || 'd4');
+  this.render = function(parent, data, renderId) {
+    render(parent, data, renderId || 'd4');
   };
 }
 

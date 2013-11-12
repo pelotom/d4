@@ -7,6 +7,7 @@ table {
   position: absolute;
   height: 98%;
   width: 99%;
+  z-index: -1;
 }
 
 table, th, td {
@@ -46,8 +47,6 @@ require.config({
 
 require(['d3', 'd4'], function(d3, d4) {
 
-var barDiv = d3.select('body').append('div');
-
 var tableData = [
   ['here', 'is',        'johnny'],
   ['blah', 'bloop',     'blee'],
@@ -64,7 +63,9 @@ var tableSpec = d4('table')
       d4('td').merge(function (td, d) { return td.html(d); })
     ), function (rows) { return rows.slice(1); });
 
-tableSpec.render(barDiv, [tableData]);
+function renderTable() {
+  tableSpec.render(d3.select('body'), [tableData], 'myTable');
+}
 
 var boxSpec = d4('rect')
   .enter(function (rect, d) {
@@ -101,19 +102,21 @@ var ellipSpec = d4('ellipse')
   })
   ;
 
-var diagram = d4('svg')
-  .child(boxSpec)
-  .child(ellipSpec)
-  ;
-
 var data = {
-  bounds: [200,150,100,45],
+  bounds: [200,250,100,45],
   color: 'blue'
 };
 
-var fooDiv = d3.select('body').append('div');
+function renderBoxAndEllipse() {
+  d4('svg')
+    .child(boxSpec)
+    .child(ellipSpec)
+    .render(d3.select('body'), [data], 'boxAndCircle')
+    ;
+}
 
-diagram.render(fooDiv, [data]);
+renderTable();
+renderBoxAndEllipse();
 
 setTimeout(function () {
   data.bounds[0] += 200;
@@ -121,10 +124,10 @@ setTimeout(function () {
   data.bounds[2] += 400;
   data.bounds[3] += 100;
   data.color = 'red';
-  diagram.render(fooDiv, [data]);
+  renderBoxAndEllipse();
 
   tableData[1][1] = 'TWIST!';
-  tableSpec.render(barDiv, [tableData]);
+  renderTable();
 
 }, 2000);
 
