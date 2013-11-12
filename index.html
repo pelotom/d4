@@ -43,8 +43,8 @@ var ellipSpec = d4.spec('ellipse')
   ;
 
 var diagram = d4.spec('svg')
-  .children(boxSpec)
-  .children(ellipSpec)
+  .child(boxSpec)
+  .child(ellipSpec)
   ;
 
 var data = {

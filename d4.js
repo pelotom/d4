@@ -49,6 +49,11 @@ function Spec(elemType, fields) {
   addBuilder('exit', identity);
   addBuilder('children');
 
+  // A convenience method for building a singleton child group
+  self.child = function(childSpec, childData) {
+    return self.children(childSpec, childData, true);
+  }
+
   function render(parent, data, path) {
 
     if (isFunction(data)) {
@@ -59,9 +64,6 @@ function Spec(elemType, fields) {
           return [];
         return d;
       };
-    } else if (!data) {
-      // If no data specified, inherit data from the parent
-      data = function(data) { return [data]; };
     }
 
     var sel = parent.selectAll(elemType + '.' + path).data(data, lastSetting('key'));
@@ -83,6 +85,12 @@ function Spec(elemType, fields) {
       fields['children'].forEach(function (childGroup, childIndex) {
         var childSpec = childGroup[0];
         var childData = childGroup[1];
+        var singleton = childGroup.length > 2 ? childGroup[2] : false;
+
+        if (isUndefined(childData)) {
+          // No data specified -- inherit data from the parent
+          childData = function(data) { return singleton ? [data] : data; };
+        }
         
         if (isFunction(childSpec))
           // Force lazy specs here
