@@ -154,14 +154,65 @@ var data = {
   ],
 };
 
-d4.draw(d3.select('body'), mainSpec, [data]);
+var boxSpec2 = d4.spec('rect')
+  .enter(function(rect, d) {
+    return rect
+      .attr('x', d.bounds[0])
+      .attr('y', d.bounds[1])
+      .attr('width', d.bounds[2])
+      .attr('height', d.bounds[3])
+      .attr('fill', d.color)
+      .attr('opacity', 0.5)
+      ;
+  })
+  ;
+
+var ellipseSpec2 = d4.spec('ellipse')
+  .merge(function(ellipse, d) {
+    var rx = d.bounds[2] / 2;
+    var ry = d.bounds[3] / 2;
+    return ellipse
+      .transition()
+      .duration(1000)
+      .attr('cx', d.bounds[0] + rx)
+      .attr('cy', d.bounds[1] + ry)
+      .attr('rx', rx)
+      .attr('ry', ry)
+      .attr('fill', d.color)
+      .attr('opacity', 0.3)
+      ;
+  })
+  ;
+
+var newSpec = d4.spec('svg')
+  .children(boxSpec2)
+  .children(ellipseSpec2)
+  ;
+
+var newData = {
+  bounds: [200,150,100,45],
+  color: 'blue'
+};
+
+newSpec.render(d3.select('body'), [newData]);
 
 setTimeout(function () {
-  var shape = data.rows[0].poly[0];
-  shape.type = 'ellipse';
-  shape.bounds[0] += 200;
-  d4.draw(d3.select('body'), mainSpec, [data]);
+  newData.bounds[0] += 200;
+  newData.bounds[1] += 50;
+  newData.bounds[2] += 400;
+  newData.bounds[3] += 100;
+  newData.color = 'red';
+  newSpec.render(d3.select('body'), [newData]);
 }, 2000);
+
+// d4.draw(d3.select('body'), mainSpec, [data]);
+
+// setTimeout(function () {
+//   var shape = data.rows[0].poly[0];
+//   shape.type = 'ellipse';
+//   shape.bounds[0] += 200;
+//   d4.draw(d3.select('body'), mainSpec, [data]);
+// }, 2000);
 
 </script>
 </body>
