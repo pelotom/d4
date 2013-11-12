@@ -7,154 +7,7 @@
 <script src='d4.js' charset='utf-8'></script>
 <script>
 
-var boxSpec = {
-  type: 'rect',
-  enter: function(rect, d) {
-    return rect
-      .attr('x', d.bounds[0])
-      .attr('y', d.bounds[1])
-      .attr('width', 0)
-      .attr('height', d.bounds[3])
-      .attr('fill', d.color)
-      .attr('opacity', 0)
-      ;
-  },
-  merge: function(rect, d) {
-    return rect
-      .transition()
-      .duration(1000)
-      .attr('x', d.bounds[0])
-      .attr('y', d.bounds[1])
-      .attr('width', d.bounds[2])
-      .attr('height', d.bounds[3])
-      .attr('fill', d.color)
-      .attr('opacity', 1)
-      ;
-  },
-  exit: function(rect, d) {
-    return rect
-      .transition()
-      .duration(500)
-      .attr('x', d.bounds[0])
-      .attr('width', 0)
-      .attr('opacity', 0)
-      ;
-  }
-};
-
-var ellipseSpec = {
-  type: 'ellipse',
-  enter: function(rect, d) {
-    var rx = 0;
-    var ry = d.bounds[3] / 2;
-    return rect
-      .attr('cx', d.bounds[0] + rx)
-      .attr('cy', d.bounds[1] + ry)
-      .attr('rx', rx)
-      .attr('ry', ry)
-      .attr('fill', d.color)
-      .attr('opacity', 0)
-      ;
-  },
-  merge: function(rect, d) {
-    var rx = d.bounds[2] / 2;
-    var ry = d.bounds[3] / 2;
-    return rect
-      .transition()
-      .duration(1000)
-      .attr('cx', d.bounds[0] + rx)
-      .attr('cy', d.bounds[1] + ry)
-      .attr('rx', rx)
-      .attr('ry', ry)
-      .attr('fill', d.color)
-      .attr('opacity', 1)
-      ;
-  },
-};
-
-var polySpec = {
-  type: 'g',
-  children: [
-    {
-      data: function (d) { if (d.type === 'rect') return [d]; },
-      spec: boxSpec
-    },
-    {
-      data: function (d) { if (d.type === 'ellipse') return [d]; },
-      spec: ellipseSpec
-    }
-  ]
-};
-
-var rowSpec = {
-  type: 'g',
-  enter: function(g, row) {
-    g.attr('transform', 'translate(0,' + row.offset + ')');
-  },
-  children: [{ spec: mainSpec }]
-};
-
-function mainSpec() {
-  return {
-    type: 'svg',
-    key: function(d) { return d.id; },
-    merge: function(svg, d, i) {
-      return svg
-        .attr('width', d.width)
-        .attr('height', d.height)
-        .style('background-color', d.bg)
-        ;
-    },
-    children: [
-      {
-        data: function(d) { return d.rows || []; },
-        spec: rowSpec
-      },
-      {
-        data: function(d) { return d.boxes || []; },
-        spec: boxSpec
-      },
-      {
-        data: function(d) { return d.poly || []; },
-        spec: polySpec
-      }
-    ]
-  };
-};
-
-var bunch = _.map(_.range(200), function (n) {
-  return {
-    bounds: [n/3,3.7*n,n*4,2],
-    color: 'red'
-  };
-})
-
-var data = {
-  width: $(window).width() - 30,
-  height: $(window).height() - 30,
-  bg: 'gray',
-  boxes: bunch,
-  rows: [
-    {
-      offset: 50,
-      poly: [
-        {
-          type: 'rect',
-          bounds: [200,150,100,45],
-          color: 'red'
-        },
-        {
-          type: 'rect',
-          bounds: [600,100,200,19],
-          color: 'blue'
-        }
-      ],
-      color: 'gray'
-    }
-  ],
-};
-
-var boxSpec2 = d4.spec('rect')
+var boxSpec = d4.spec('rect')
   .enter(function(rect, d) {
     return rect
       .attr('x', d.bounds[0])
@@ -167,7 +20,12 @@ var boxSpec2 = d4.spec('rect')
   })
   ;
 
-var ellipseSpec2 = d4.spec('ellipse')
+var ellipSpec = d4.spec('ellipse')
+  .enter(function(ellipse, d) {
+    return ellipse
+      .attr('fill', d.color)
+      ;
+  })
   .merge(function(ellipse, d) {
     var rx = d.bounds[2] / 2;
     var ry = d.bounds[3] / 2;
@@ -184,35 +42,26 @@ var ellipseSpec2 = d4.spec('ellipse')
   })
   ;
 
-var newSpec = d4.spec('svg')
-  .children(boxSpec2)
-  .children(ellipseSpec2)
+var diagram = d4.spec('svg')
+  .children(boxSpec)
+  .children(ellipSpec)
   ;
 
-var newData = {
+var data = {
   bounds: [200,150,100,45],
   color: 'blue'
 };
 
-newSpec.render(d3.select('body'), [newData]);
+diagram.render(d3.select('body'), [data]);
 
 setTimeout(function () {
-  newData.bounds[0] += 200;
-  newData.bounds[1] += 50;
-  newData.bounds[2] += 400;
-  newData.bounds[3] += 100;
-  newData.color = 'red';
-  newSpec.render(d3.select('body'), [newData]);
+  data.bounds[0] += 200;
+  data.bounds[1] += 50;
+  data.bounds[2] += 400;
+  data.bounds[3] += 100;
+  data.color = 'red';
+  diagram.render(d3.select('body'), [data]);
 }, 2000);
-
-// d4.draw(d3.select('body'), mainSpec, [data]);
-
-// setTimeout(function () {
-//   var shape = data.rows[0].poly[0];
-//   shape.type = 'ellipse';
-//   shape.bounds[0] += 200;
-//   d4.draw(d3.select('body'), mainSpec, [data]);
-// }, 2000);
 
 </script>
 </body>
