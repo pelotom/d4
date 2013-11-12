@@ -1,5 +1,34 @@
 <!DOCTYPE html>
 <html>
+<head>
+<style>
+
+table {
+  position: absolute;
+  height: 98%;
+  width: 99%;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+
+td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+table, td, th {
+  border:1px solid green;
+}
+
+th {
+  background-color:green;
+  color:white;
+}
+
+</style>
+</head>
 <body>
 <script src='bower_components/d3/d3.js' charset='utf-8'></script>
 <script src='bower_components/jquery/jquery.js' charset='utf-8'></script>
@@ -7,8 +36,34 @@
 <script src='d4.js' charset='utf-8'></script>
 <script>
 
+var barDiv = d3.select('body').append('div');
+
+var tableData = [
+  ['here', 'is',        'johnny'],
+  ['blah', 'bloop',     'blee'],
+  ['merg', 'samsonite', 'luggage']
+];
+
+var tableSpec = 
+  d4.spec('table')
+    .children(
+      d4.spec('tr').children(
+        d4.spec('th').merge(function (th, d) { return th.html(d); })
+      ),
+      function (rows) { return [rows[0]]; }
+    )
+    .children(
+      d4.spec('tr').children(
+        d4.spec('td').merge(function (td, d) { return td.html(d); })
+      ),
+      function (rows) { return rows.slice(1); }
+    )
+    ;
+
+tableSpec.render(barDiv, [tableData]);
+
 var boxSpec = d4.spec('rect')
-  .enter(function(rect, d) {
+  .enter(function (rect, d) {
     return rect
       .attr('x', d.bounds[0])
       .attr('y', d.bounds[1])
@@ -52,7 +107,9 @@ var data = {
   color: 'blue'
 };
 
-diagram.render(d3.select('body'), [data]);
+var fooDiv = d3.select('body').append('foo');
+
+diagram.render(fooDiv, [data]);
 
 setTimeout(function () {
   data.bounds[0] += 200;
@@ -60,7 +117,11 @@ setTimeout(function () {
   data.bounds[2] += 400;
   data.bounds[3] += 100;
   data.color = 'red';
-  diagram.render(d3.select('body'), [data]);
+  diagram.render(fooDiv, [data]);
+
+  tableData[1][1] = 'TWIST!';
+  tableSpec.render(barDiv, [tableData]);
+
 }, 2000);
 
 </script>
