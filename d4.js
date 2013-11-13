@@ -65,16 +65,6 @@ function Spec(elemType, fields) {
 
   function render(parent, data, path) {
 
-    if (isFunction(data)) {
-      // Allow data functions to be partial, treating undefined as []
-      var f = data;
-      data = function(d) {
-        if (isUndefined(d = f(d)))
-          return [];
-        return d;
-      };
-    }
-
     var sel = parent.selectAll('.' + path).data(data, lastSetting('key'));
 
     function doPhase(phase, sel) {
@@ -96,7 +86,15 @@ function Spec(elemType, fields) {
         var childData = childGroup[1];
         var singleton = childGroup.length > 2 ? childGroup[2] : false;
 
-        if (isUndefined(childData)) {
+        if (isFunction(childData)) {
+          var f = childData;
+          childData = function(d) {
+            if (isUndefined(d = f(d)))
+              // Allow data functions to be partial, treating undefined as []
+              return [];
+            return singleton ? [d] : d;
+          };
+        } else if (isUndefined(childData)) {
           // No data specified -- inherit data from the parent
           childData = function(data) { return singleton ? [data] : data; };
         }
