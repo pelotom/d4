@@ -62,6 +62,18 @@ var data = seeds.map(function(n) {
   }
 });
 
+function isRect(d) {
+  return d.type === 'rect';
+}
+
+function isCircle(d) {
+  return d.type === 'circle';
+}
+
+function isTriangle(d) {
+  return d.type === 'triangle';
+}
+
 function polySpec() {
   var rectSpec = d4('rect')
     .merge(function(rect, d) {
@@ -105,7 +117,7 @@ function polySpec() {
         d.center = [d3.event.x, d3.event.y];
       }));
       $(g.node()).click(function() {
-        d.type = d.type === 'circle' ? 'rect' : d.type === 'rect' ? 'triangle' : 'circle';
+        d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
         d.color = 'black';
       });
     })
@@ -119,9 +131,9 @@ function polySpec() {
       .attr('opacity', 0.5)
       ;
     })
-    .child(rectSpec, function(d) { if (d.type === 'rect') return d; })
-    .child(circSpec, function(d) { if (d.type === 'circle') return d; })
-    .child(triangleSpec, function(d) { if (d.type === 'triangle') return d; })
+    .child(rectSpec, function(d) { if (isRect(d)) return d; })
+    .child(circSpec, function(d) { if (isCircle(d)) return d; })
+    .child(triangleSpec, function(d) { if (isTriangle(d)) return d; })
     ;
 }
 
