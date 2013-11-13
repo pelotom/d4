@@ -51,10 +51,11 @@ require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
 
 var seeds = _.range(200);
 var colors = d3.scale.category20().domain(seeds);
+var zoom = d3.behavior.zoom();
 
 var data = seeds.map(function(n) {
   return {
-    type: n % 2 === 0 ? 'rect' : 'circle',
+    type: n % 3 == 0 ? 'rect' : n % 3 == 1 ? 'circle' : 'triangle',
     center: [Math.random() * $(window).width(), Math.random() * $(window).height()],
     size: 10 + Math.random() * 30,
     color: colors(n)
@@ -70,8 +71,6 @@ function polySpec() {
         .attr('y', -d.size)
         .attr('width', 2 * d.size)
         .attr('height', 2 * d.size)
-        .attr('fill', d.color)
-        .attr('opacity', 0.5)
         ;
     })
     ;
@@ -81,8 +80,17 @@ function polySpec() {
       return circle
         .classed('polymorph', true)
         .attr('r', d.size)
-        .attr('fill', d.color)
-        .attr('opacity', 0.5)
+        ;
+    })
+    ;
+
+  var triangleSpec = d4('path')
+    .merge(function(path, d) {
+      return path
+        .attr('d',
+          'M 0 -' + d.size +
+          ' L ' + d.size + ' ' + d.size +
+          ' L -' + d.size + ' ' + d.size + ' Z')
         ;
     })
 
@@ -92,18 +100,27 @@ function polySpec() {
         d.center = [d3.event.x, d3.event.y];
       }));
       $(g.node()).click(function() {
-        d.type = d.type === 'circle' ? 'rect' : 'circle';
+        d.type = d.type === 'circle' ? 'rect' : d.type === 'rect' ? 'triangle' : 'circle';
+        d.color = 'black';
       });
     })
     .merge(function(g, d) {
-      return g.attr('transform', 'translate(' + d.center[0] + ',' + d.center[1] + ')');
+      return g.attr('transform',
+        'translate(' + zoom.translate()[0] + ', ' + zoom.translate()[1] + ')' +
+        'scale(' + zoom.scale() + ') ' +
+        'translate(' + d.center[0] + ',' + d.center[1] + ')'
+      )
+      .attr('fill', d.color)
+      .attr('opacity', 0.5)
+      ;
     })
     .child(rectSpec, function(d) { if (d.type === 'rect') return d; })
     .child(circSpec, function(d) { if (d.type === 'circle') return d; })
+    .child(triangleSpec, function(d) { if (d.type === 'triangle') return d; })
     ;
 }
 
-var svg = d3.select('body').append('svg');
+var svg = d3.select('body').append('svg').call(zoom);
 
 (function foo() {
   polySpec().render(svg, data);
