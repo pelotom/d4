@@ -87,10 +87,15 @@ function polySpec() {
   var triangleSpec = d4('path')
     .merge(function(path, d) {
       return path
-        .attr('d',
-          'M 0 -' + d.size +
-          ' L ' + d.size + ' ' + d.size +
-          ' L -' + d.size + ' ' + d.size + ' Z')
+        .attr('d', d3.svg.line()
+          .x(function(pair){return pair[0];})
+          .y(function(pair){return pair[1];})
+          .interpolate('linear')([
+            [0,-d.size],
+            [d.size,d.size],
+            [-d.size,d.size]
+          ]) + 'Z'
+        )
         ;
     })
 
