@@ -51,7 +51,7 @@ require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
 
 var seeds = _.range(200);
 var colors = d3.scale.category20().domain(seeds);
-var zoom = d3.behavior.zoom();
+var zoom = d3.behavior.zoom().on('zoom', draw);
 
 var data = seeds.map(function(n) {
   return {
@@ -74,7 +74,7 @@ function isTriangle(d) {
   return d.type === 'triangle';
 }
 
-function polySpec() {
+function chartSpec() {
   var rectSpec = d4('rect')
     .merge(function(rect, d) {
       return rect
@@ -111,20 +111,27 @@ function polySpec() {
         ;
     })
 
-  return d4('g')
+  var polySpec = d4('g')
     .enter(function(g, d) {
-      g.call(d3.behavior.drag().on('drag', function() {
-        d.center = [d3.event.x, d3.event.y];
-      }));
-      $(g.node()).click(function() {
-        d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
-        d.color = 'black';
-      });
+      return g
+        .call(d3.behavior.drag()
+          .on('dragstart', function() {
+            d3.event.sourceEvent.stopPropagation();
+          })
+          .on('drag', function() {
+            d.center = [d3.event.x, d3.event.y];
+            draw();
+          })
+        )
+        .on('click', function() {
+          if (d3.event.defaultPrevented) return;
+          d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
+          draw();
+        })
+        ;
     })
     .merge(function(g, d) {
       return g.attr('transform',
-        'translate(' + zoom.translate()[0] + ', ' + zoom.translate()[1] + ')' +
-        'scale(' + zoom.scale() + ') ' +
         'translate(' + d.center[0] + ',' + d.center[1] + ')'
       )
       .attr('fill', d.color)
@@ -135,14 +142,29 @@ function polySpec() {
     .child(circSpec, function(d) { if (isCircle(d)) return d; })
     .child(triangleSpec, function(d) { if (isTriangle(d)) return d; })
     ;
+
+  return d4('g')
+    .merge(function (g) {
+      return g
+        .transition()
+        .duration(20)
+        .ease(d3.ease('linear'))
+        .attr('transform',
+          'translate(' + zoom.translate()[0] + ', ' + zoom.translate()[1] + ') ' +
+          'scale(' + zoom.scale() + ')'
+        );
+    })
+    .children(polySpec)
+    ;
 }
 
 var svg = d3.select('body').append('svg').call(zoom);
 
-(function foo() {
-  polySpec().render(svg, data);
-  setTimeout(foo, 10);
-})();
+function draw() {
+  chartSpec().render(svg, [data]);
+}
+
+draw();
 
 });
 
