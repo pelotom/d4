@@ -49,7 +49,7 @@ require.config({
 
 require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
 
-var seeds = _.range(200);
+var seeds = _.range(5000);
 var colors = d3.scale.category20().domain(seeds);
 var zoom = d3.behavior.zoom().on('zoom', draw);
 
@@ -57,10 +57,12 @@ var data = seeds.map(function(n) {
   return {
     type: n % 3 == 0 ? 'rect' : n % 3 == 1 ? 'circle' : 'triangle',
     center: [Math.random() * $(window).width(), Math.random() * $(window).height()],
-    size: 10 + Math.random() * 30,
+    size: 3 + Math.random() * 5,
     color: colors(n)
   }
 });
+
+data.dirty = true;
 
 function isRect(d) {
   return d.type === 'rect';
@@ -120,17 +122,19 @@ function chartSpec() {
           })
           .on('drag', function() {
             d.center = [d3.event.x, d3.event.y];
+            data.dirty = true;
             draw();
           })
         )
         .on('click', function() {
           if (d3.event.defaultPrevented) return;
           d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
+          data.dirty = true;
           draw();
         })
         ;
     })
-    .merge(function(g, d) {
+    .merge(function(g, d, i) {
       return g.attr('transform',
         'translate(' + d.center[0] + ',' + d.center[1] + ')'
       )
@@ -143,25 +147,26 @@ function chartSpec() {
     .child(triangleSpec, function(d) { if (isTriangle(d)) return d; })
     ;
 
-  return d4('g')
+  var chart = d4('g')
     .merge(function (g) {
       return g
-        .transition()
-        .duration(20)
-        .ease(d3.ease('linear'))
         .attr('transform',
           'translate(' + zoom.translate()[0] + ', ' + zoom.translate()[1] + ') ' +
           'scale(' + zoom.scale() + ')'
         );
     })
     .children(polySpec)
+    .descendIf(function(d) { return d.dirty; })
     ;
+
+  return chart;
 }
 
 var svg = d3.select('body').append('svg').call(zoom);
 
 function draw() {
   chartSpec().render(svg, [data]);
+  data.dirty = false;
 }
 
 draw();

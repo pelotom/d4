@@ -11,6 +11,8 @@
 
 function identity(x) { return x; }
 
+function constant(x) { return function() { return x; } }
+
 function shallowCopy(obj) {
   var clone = {};
   for (var p in obj)
@@ -57,6 +59,7 @@ function Spec(elemType, fields) {
   addBuilder('merge', identity);
   addBuilder('exit', identity);
   addBuilder('children');
+  addBuilder('descendIf', constant(true));
 
   // A convenience method for building a singleton child group
   self.child = function(childSpec, childData) {
@@ -79,6 +82,9 @@ function Spec(elemType, fields) {
     doPhase('enter', sel.enter().append(elemType).classed(path, true));
     doPhase('merge', sel);
     doPhase('exit', sel.exit()).forEach(function (sel) { sel.remove(); });
+
+    var descendIf = lastSetting('descendIf');
+    sel = sel.filter(descendIf);
 
     if (!sel.empty()) {
       fields['children'].forEach(function (childGroup, childIndex) {
