@@ -49,7 +49,7 @@ require.config({
 
 require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
 
-var seeds = _.range(200);
+var seeds = _.range(3000);
 var colors = d3.scale.category20().domain(seeds);
 var zoom = d3.behavior.zoom().on('zoom', draw);
 
@@ -57,7 +57,7 @@ var data = seeds.map(function(n) {
   return {
     type: n % 3 == 0 ? 'rect' : n % 3 == 1 ? 'circle' : 'triangle',
     center: [Math.random() * $(window).width(), Math.random() * $(window).height()],
-    size: 10 + Math.random() * 30,
+    size: 3 + Math.random() * 5,
     color: colors(n)
   }
 });
