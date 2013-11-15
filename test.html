@@ -49,7 +49,7 @@ require.config({
 
 require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
 
-var seeds = _.range(5000);
+var seeds = _.range(3000);
 var colors = d3.scale.category20().domain(seeds);
 var data = seeds.map(function(n) {
   return {
