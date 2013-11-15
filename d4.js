@@ -124,12 +124,13 @@ function Spec(elemType, fields) {
     });
   }
 
-  this.rerender = render;
+  this._render = render;
 
   this.render = function(parent, data, renderId) {
     renderId = renderId || 'd4';
     var sel = parent.selectAll('.' + renderId).data(data, lastSetting('key'));
     render(sel, true, renderId);
+    return sel;
   };
 }
 
@@ -143,7 +144,9 @@ d3.selection.prototype.render = function(deep) {
 
   var d4Data = sel.node()['__d4_data__'];
 
-  d4Data.spec.rerender(sel, deep, d4Data.renderId);
+  d4Data.spec._render(sel, deep, d4Data.renderId);
+
+  return this;
 };
 
 return function(elemType) {
