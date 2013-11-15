@@ -59,16 +59,13 @@ function Spec(elemType, fields) {
   addBuilder('merge', identity);
   addBuilder('exit', identity);
   addBuilder('children');
-  addBuilder('descendIf', constant(true));
 
   // A convenience method for building a singleton child group
   self.child = function(childSpec, childData) {
     return self.children(childSpec, childData, true);
   }
 
-  function render(parent, data, path) {
-
-    var sel = parent.selectAll('.' + path).data(data, lastSetting('key'));
+  function render(sel, deep, renderId) {
 
     function doPhase(phase, sel) {
       var resultSels = [];
@@ -79,45 +76,75 @@ function Spec(elemType, fields) {
     }
 
     doPhase('update', sel);
-    doPhase('enter', sel.enter().append(elemType).classed(path, true));
+    
+    var enter = sel.enter().append(elemType)
+      .classed(renderId, true)
+      .each(function() {
+        this['__d4_data__'] = {
+          spec: self,
+          renderId: renderId
+        };
+      })
+      ;
+    doPhase('enter', enter);
+
     doPhase('merge', sel);
-    doPhase('exit', sel.exit()).forEach(function (sel) { sel.remove(); });
 
-    var descendIf = lastSetting('descendIf');
-    sel = sel.filter(descendIf);
+    var exit = doPhase('exit', sel.exit());
+    exit.forEach(function (sel) { sel.remove(); });
 
-    if (!sel.empty()) {
-      fields['children'].forEach(function (childGroup, childIndex) {
-        var childSpec = childGroup[0];
-        var childData = childGroup[1];
-        var singleton = childGroup.length > 2 ? childGroup[2] : false;
-
-        if (isFunction(childData)) {
-          var f = childData;
-          childData = function(d) {
-            if (isUndefined(d = f(d)))
-              // Allow data functions to be partial, treating undefined as []
-              return [];
-            return singleton ? [d] : d;
-          };
-        } else if (isUndefined(childData)) {
-          // No data specified -- inherit data from the parent
-          childData = function(data) { return singleton ? [data] : data; };
-        }
-        
-        if (isFunction(childSpec))
-          // Force lazy specs here
-          childSpec = childSpec();
-
-        childSpec.render(sel, childData, path + '-' + childIndex)
-      });
-    }
+    if (deep && !sel.empty())
+      renderChildren(sel, renderId);
   }
 
+  function renderChildren(sel, renderId) {
+    fields['children'].forEach(function (childGroup, childIndex) {
+      var childSpec = childGroup[0];
+      var childData = childGroup[1];
+      var singleton = childGroup.length > 2 ? childGroup[2] : false;
+
+      if (isFunction(childData)) {
+        var f = childData;
+        childData = function(d) {
+          if (isUndefined(d = f(d)))
+            // Allow data functions to be partial, treating undefined as []
+            return [];
+          return singleton ? [d] : d;
+        };
+      } else if (isUndefined(childData)) {
+        // No data specified -- inherit data from the parent
+        childData = function(data) { return singleton ? [data] : data; };
+      }
+      
+      if (isFunction(childSpec))
+        // Force lazy specs here
+        childSpec = childSpec();
+
+      childSpec.render(sel, childData, renderId + '-' + childIndex)
+    });
+  }
+
+  this.rerender = render;
+
   this.render = function(parent, data, renderId) {
-    render(parent, data, renderId || 'd4');
+    renderId = renderId || 'd4';
+    var sel = parent.selectAll('.' + renderId).data(data, lastSetting('key'));
+    render(sel, true, renderId);
   };
 }
+
+d3.selection.prototype.render = function(deep) {
+  deep = isUndefined(deep) ? true : deep;
+
+  var nodes = [];
+  this.each(function() { nodes.push(this); });
+  var sel = d3.selectAll(nodes);
+  sel = sel.data(sel.data());
+
+  var d4Data = sel.node()['__d4_data__'];
+
+  d4Data.spec.rerender(sel, deep, d4Data.renderId);
+};
 
 return function(elemType) {
   return new Spec(elemType);

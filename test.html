@@ -51,8 +51,6 @@ require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
 
 var seeds = _.range(5000);
 var colors = d3.scale.category20().domain(seeds);
-var zoom = d3.behavior.zoom().on('zoom', draw);
-
 var data = seeds.map(function(n) {
   return {
     type: n % 3 == 0 ? 'rect' : n % 3 == 1 ? 'circle' : 'triangle',
@@ -62,7 +60,9 @@ var data = seeds.map(function(n) {
   }
 });
 
-data.dirty = true;
+var zoom = d3.behavior.zoom().on('zoom', function() {
+  d3.select('.chart').render(false);
+});
 
 function isRect(d) {
   return d.type === 'rect';
@@ -122,25 +122,24 @@ function chartSpec() {
           })
           .on('drag', function() {
             d.center = [d3.event.x, d3.event.y];
-            data.dirty = true;
-            draw();
+            g.render(false);
           })
         )
         .on('click', function() {
           if (d3.event.defaultPrevented) return;
           d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
-          data.dirty = true;
-          draw();
+          g.render();
         })
         ;
     })
     .merge(function(g, d, i) {
-      return g.attr('transform',
-        'translate(' + d.center[0] + ',' + d.center[1] + ')'
-      )
-      .attr('fill', d.color)
-      .attr('opacity', 0.5)
-      ;
+      return g
+        .attr('transform',
+          'translate(' + d.center[0] + ',' + d.center[1] + ')'
+        )
+        .attr('fill', d.color)
+        .attr('opacity', 0.5)
+        ;
     })
     .child(rectSpec, function(d) { if (isRect(d)) return d; })
     .child(circSpec, function(d) { if (isCircle(d)) return d; })
@@ -156,7 +155,6 @@ function chartSpec() {
         );
     })
     .children(polySpec)
-    .descendIf(function(d) { return d.dirty; })
     ;
 
   return chart;
@@ -165,8 +163,7 @@ function chartSpec() {
 var svg = d3.select('body').append('svg').call(zoom);
 
 function draw() {
-  chartSpec().render(svg, [data]);
-  data.dirty = false;
+  chartSpec().render(svg, [data], 'chart');
 }
 
 draw();
