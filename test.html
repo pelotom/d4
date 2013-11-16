@@ -66,7 +66,7 @@ var svg = d3.select('body').append('svg')
 var zoom = d3.behavior.zoom();
 zoom(svg);
 
-var diagram = chartSpec().render(svg, [shapes]);
+var diagram = d4.render(chartSpec, svg, [shapes]);
 
 zoom.on('zoom', function() {
   diagram.render(false);
