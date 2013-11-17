@@ -75,12 +75,16 @@ function Spec(elemType, fields) {
   }
 }
 
-function render(spec, sel, deep, renderId) {
+function doPhaseForNode(spec, phase, node, d, i) {
+  return spec[phase]().call(spec, d3.select(node), d, i);
+}
+
+function draw(spec, sel, renderId) {
 
   function doPhase(phase, sel) {
     var resultSels = [];
     sel.each(function(d, i) {
-      resultSels.push(spec[phase]().call(spec, d3.select(this), d, i));
+      resultSels.push(doPhaseForNode(spec, phase, this, d, i));
     });
     return resultSels;
   }
@@ -89,10 +93,12 @@ function render(spec, sel, deep, renderId) {
   
   var enter = sel.enter().append(spec.elemType())
     .classed(renderId, true)
-    .each(function() {
+    .each(function(d, i) {
       this['__d4_data__'] = {
         spec: spec,
-        renderId: renderId
+        renderId: renderId,
+        datum: d,
+        index: i
       };
     })
     ;
@@ -103,12 +109,12 @@ function render(spec, sel, deep, renderId) {
   var exit = doPhase('exit', sel.exit());
   exit.forEach(function (sel) { sel.remove(); });
 
-  if (deep && !sel.empty())
-    renderChildren(spec, sel, renderId);
+  if (!sel.empty())
+    drawChildren(spec, sel, renderId);
 }
 
-function renderChildren(spec, sel, renderId) {
-  return spec.children().map(function (childGroup, childIndex) {
+function drawChildren(spec, sel, renderId) {
+  spec.children().forEach(function (childGroup, childIndex) {
     var childSpec = childGroup[0];
     var childData = childGroup[1];
     var singleton = childGroup.length > 2 ? childGroup[2] : false;
@@ -126,7 +132,7 @@ function renderChildren(spec, sel, renderId) {
       childData = function(data) { return singleton ? [data] : data; };
     }
 
-    return d4.render(childSpec, sel, childData, renderId + '-' + childIndex);
+    return d4.draw(childSpec, sel, childData, renderId + '-' + childIndex);
   });
 }
 
@@ -135,7 +141,7 @@ d4 = function (elemType) {
   return new Spec(elemType);
 };
 
-d4.render = function(spec, parentSel, data, renderId) {
+d4.draw = function(spec, parentSel, data, renderId) {
   renderId = renderId || 'd4';
 
   // Force lazy specs
@@ -143,23 +149,37 @@ d4.render = function(spec, parentSel, data, renderId) {
     spec = spec();
 
   var sel = parentSel.selectAll('.' + renderId).data(data, spec.key());
-  render(spec, sel, true, renderId);
+  draw(spec, sel, renderId);
   return sel;
 };
 
-// Add a render method to d3 selections that allows them to re-render themselves
-// based on a previously-assigned spec
-d3.selection.prototype.render = function(deep) {
+// Get all nodes in a selection... annoying that d3 doesn't have this already
+d3.selection.prototype.nodes = function() {
+  var nodes = [];
+  this.each(function() {
+    nodes.push(this);
+  });
+  return nodes;
+};
+
+// Redraw all existing nodes in a selection via their spec, using currently-assigned
+// data. The `deep` argument determines whether to also redraw descendents. Only the
+// `update` and `merge` phases are processed for the nodes in the top-level selection.
+// Therefore, it's ok to change the data associated with a selection before calling
+// `redraw`, but one should not change the cardinality of the data. If children are
+// redrawn as well, all phases are processed for them.
+d3.selection.prototype.redraw = function(deep) {
   deep = isUndefined(deep) ? true : deep;
 
-  var nodes = [];
-  this.each(function() { nodes.push(this); });
-  var sel = d3.selectAll(nodes);
-  sel = sel.data(sel.data());
-
-  var d4Data = sel.node()['__d4_data__'];
-
-  render(d4Data.spec, sel, deep, d4Data.renderId);
+  this.each(function() {
+    var d4Data = this['__d4_data__'];
+    var self = this;
+    ['update', 'merge'].forEach(function(phase) {
+      doPhaseForNode(d4Data.spec, phase, self, d4Data.datum, d4Data.index);
+    });
+    if (deep)
+      drawChildren(d4Data.spec, d3.selectAll([this]), d4Data.renderId);
+  });
 
   return this;
 };

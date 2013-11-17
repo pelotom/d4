@@ -66,13 +66,11 @@ var svg = d3.select('body').append('svg')
 var zoom = d3.behavior.zoom();
 zoom(svg);
 
-var diagram = d4.render(chartSpec, svg, [shapes]);
+var diagram = d4.draw(chartSpec, svg, [shapes]);
 
 zoom.on('zoom', function() {
-  diagram.render(false);
+  diagram.redraw(false);
 });
-
-diagram.render();
 
 function isRect(d) {
   return d.type === 'rect';
@@ -132,13 +130,13 @@ function chartSpec() {
           })
           .on('drag', function() {
             d.center = [d3.event.x, d3.event.y];
-            g.render(false);
+            g.redraw(false);
           })
         )
         .on('click', function() {
           if (d3.event.defaultPrevented) return;
           d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
-          g.render();
+          g.redraw();
         })
         ;
     })
