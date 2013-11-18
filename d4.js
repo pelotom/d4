@@ -9,8 +9,6 @@
     }
 }(this, function (d3) {
 
-var d4; // the module being defined
-
 function identity(x) { return x; }
 
 function constant(x) { return function() { return x; } }
@@ -132,23 +130,18 @@ function drawChildren(spec, sel, renderId) {
       childData = function(data) { return singleton ? [data] : data; };
     }
 
-    return d4.draw(childSpec, sel, childData, renderId + '-' + childIndex);
+    return sel.draw(childSpec, childData, renderId + '-' + childIndex);
   });
 }
 
-// The module itself is a function for building specs
-d4 = function (elemType) {
-  return new Spec(elemType);
-};
-
-d4.draw = function(spec, parentSel, data, renderId) {
+d3.selection.prototype.draw = function(spec, data, renderId) {
   renderId = renderId || 'd4';
 
   // Force lazy specs
   if (isFunction(spec))
     spec = spec();
 
-  var sel = parentSel.selectAll('.' + renderId).data(data, spec.key());
+  var sel = this.selectAll('.' + renderId).data(data, spec.key());
   draw(spec, sel, renderId);
   return sel;
 };
@@ -184,6 +177,9 @@ d3.selection.prototype.redraw = function(deep) {
   return this;
 };
 
-return d4;
+// The module itself is a function for building specs
+return function (elemType) {
+  return new Spec(elemType);
+};
 
 }));
