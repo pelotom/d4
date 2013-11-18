@@ -9,7 +9,11 @@
     }
 }(this, function (d3) {
 
+var d4; // the module being defined
+
 function identity(x) { return x; }
+
+function constant(x) { return function() { return x; } }
 
 function shallowCopy(obj) {
   var clone = {};
@@ -32,89 +36,154 @@ function Spec(elemType, fields) {
   } else
     addFields = false;
 
-  function addBuilder(field, def) {
+  function lastSetting(settings) {
+    return settings.length === 0 ? undefined : settings[settings.length - 1];
+  }
+
+  function addBuilder(field, def, accessor) {
     if (addFields) {
       fields[field] = [];
-      if (arguments.length > 1)
+      if (!isUndefined(def))
         fields[field].push([def]); 
     }
+    if (isUndefined(accessor))
+      accessor = function(settings) {
+        var args = lastSetting(settings);
+        return isUndefined(args) ? undefined : args[0];
+      };
     self[field] = function() {
+      if (arguments.length === 0) // invoked as an accessor
+        return accessor(fields[field]);
       var newFields = shallowCopy(fields);
       newFields[field] = newFields[field].concat([Array.prototype.slice.call(arguments)]);
       return new Spec(elemType, newFields);
     };
   }
 
-  function lastSetting(field) {
-    var settings = fields[field];
-    return settings.length === 0 ? undefined : settings[settings.length - 1][0];
-  }
-
   // Add chainable setters for simple fields
+  addBuilder('elemType', elemType);
   addBuilder('key');
   addBuilder('enter', identity);
   addBuilder('update', identity);
   addBuilder('merge', identity);
   addBuilder('exit', identity);
-  addBuilder('children');
+  addBuilder('children', undefined, identity);
 
   // A convenience method for building a singleton child group
   self.child = function(childSpec, childData) {
     return self.children(childSpec, childData, true);
   }
-
-  function render(parent, data, path) {
-
-    var sel = parent.selectAll('.' + path).data(data, lastSetting('key'));
-
-    function doPhase(phase, sel) {
-      var resultSels = [];
-      sel.each(function(d, i) {
-        resultSels.push(lastSetting(phase).call(self, d3.select(this), d, i));
-      });
-      return resultSels;
-    }
-
-    doPhase('update', sel);
-    doPhase('enter', sel.enter().append(elemType).classed(path, true));
-    doPhase('merge', sel);
-    doPhase('exit', sel.exit()).forEach(function (sel) { sel.remove(); });
-
-    if (!sel.empty()) {
-      fields['children'].forEach(function (childGroup, childIndex) {
-        var childSpec = childGroup[0];
-        var childData = childGroup[1];
-        var singleton = childGroup.length > 2 ? childGroup[2] : false;
-
-        if (isFunction(childData)) {
-          var f = childData;
-          childData = function(d) {
-            if (isUndefined(d = f(d)))
-              // Allow data functions to be partial, treating undefined as []
-              return [];
-            return singleton ? [d] : d;
-          };
-        } else if (isUndefined(childData)) {
-          // No data specified -- inherit data from the parent
-          childData = function(data) { return singleton ? [data] : data; };
-        }
-        
-        if (isFunction(childSpec))
-          // Force lazy specs here
-          childSpec = childSpec();
-
-        childSpec.render(sel, childData, path + '-' + childIndex)
-      });
-    }
-  }
-
-  this.render = function(parent, data, renderId) {
-    render(parent, data, renderId || 'd4');
-  };
 }
 
-return function(elemType) {
+function doPhaseForNode(spec, phase, node, d, i) {
+  return spec[phase]().call(spec, d3.select(node), d, i);
+}
+
+function draw(spec, sel, renderId) {
+
+  function doPhase(phase, sel) {
+    var resultSels = [];
+    sel.each(function(d, i) {
+      resultSels.push(doPhaseForNode(spec, phase, this, d, i));
+    });
+    return resultSels;
+  }
+
+  doPhase('update', sel);
+  
+  var enter = sel.enter().append(spec.elemType())
+    .classed(renderId, true)
+    .each(function(d, i) {
+      this['__d4_data__'] = {
+        spec: spec,
+        renderId: renderId,
+        datum: d,
+        index: i
+      };
+    })
+    ;
+  doPhase('enter', enter);
+
+  doPhase('merge', sel);
+
+  var exit = doPhase('exit', sel.exit());
+  exit.forEach(function (sel) { sel.remove(); });
+
+  if (!sel.empty())
+    drawChildren(spec, sel, renderId);
+}
+
+function drawChildren(spec, sel, renderId) {
+  spec.children().forEach(function (childGroup, childIndex) {
+    var childSpec = childGroup[0];
+    var childData = childGroup[1];
+    var singleton = childGroup.length > 2 ? childGroup[2] : false;
+
+    if (isFunction(childData)) {
+      var f = childData;
+      childData = function(d) {
+        if (isUndefined(d = f(d)))
+          // Allow data functions to be partial, treating undefined as []
+          return [];
+        return singleton ? [d] : d;
+      };
+    } else if (isUndefined(childData)) {
+      // No data specified -- inherit data from the parent
+      childData = function(data) { return singleton ? [data] : data; };
+    }
+
+    return d4.draw(childSpec, sel, childData, renderId + '-' + childIndex);
+  });
+}
+
+// The module itself is a function for building specs
+d4 = function (elemType) {
   return new Spec(elemType);
 };
+
+d4.draw = function(spec, parentSel, data, renderId) {
+  renderId = renderId || 'd4';
+
+  // Force lazy specs
+  if (isFunction(spec))
+    spec = spec();
+
+  var sel = parentSel.selectAll('.' + renderId).data(data, spec.key());
+  draw(spec, sel, renderId);
+  return sel;
+};
+
+// Get all nodes in a selection... annoying that d3 doesn't have this already
+d3.selection.prototype.nodes = function() {
+  var nodes = [];
+  this.each(function() {
+    nodes.push(this);
+  });
+  return nodes;
+};
+
+// Redraw all existing nodes in a selection via their spec, using currently-assigned
+// data. The `deep` argument determines whether to also redraw descendents. Only the
+// `update` and `merge` phases are processed for the nodes in the top-level selection.
+// Therefore, it's ok to change the data associated with a selection before calling
+// `redraw`, but one should not change the cardinality of the data. If children are
+// redrawn as well, all phases are processed for them.
+d3.selection.prototype.redraw = function(deep) {
+  deep = isUndefined(deep) ? true : deep;
+
+  this.each(function() {
+    var d4Data = this['__d4_data__'];
+    var self = this;
+    ['update', 'merge'].forEach(function(phase) {
+      doPhaseForNode(d4Data.spec, phase, self, d4Data.datum, d4Data.index);
+    });
+    if (deep)
+      drawChildren(d4Data.spec, d3.selectAll([this]), d4Data.renderId);
+  });
+
+  return this;
+};
+
+return d4;
 
 }));

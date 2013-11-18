@@ -31,10 +31,8 @@ th {
 </style>
 </head>
 <body>
-<script src='bower_components/requirejs/require.js' charset='utf-8'></script>
 <script>
-
-require.config({
+require = {
   paths: {
     d3: 'bower_components/d3/d3',
     underscore: 'bower_components/lodash/dist/lodash',
@@ -45,129 +43,8 @@ require.config({
     underscore: { exports: '_' },
     jquery: { exports: '$' }
   }
-});
-
-require(['d3', 'd4', 'underscore', 'jquery'], function(d3, d4, _, $) {
-
-var seeds = _.range(3000);
-var colors = d3.scale.category20().domain(seeds);
-var zoom = d3.behavior.zoom().on('zoom', draw);
-
-var data = seeds.map(function(n) {
-  return {
-    type: n % 3 == 0 ? 'rect' : n % 3 == 1 ? 'circle' : 'triangle',
-    center: [Math.random() * $(window).width(), Math.random() * $(window).height()],
-    size: 3 + Math.random() * 5,
-    color: colors(n)
-  }
-});
-
-function isRect(d) {
-  return d.type === 'rect';
-}
-
-function isCircle(d) {
-  return d.type === 'circle';
-}
-
-function isTriangle(d) {
-  return d.type === 'triangle';
-}
-
-function chartSpec() {
-  var rectSpec = d4('rect')
-    .merge(function(rect, d) {
-      return rect
-        .classed('polymorph', true)
-        .attr('x', -d.size)
-        .attr('y', -d.size)
-        .attr('width', 2 * d.size)
-        .attr('height', 2 * d.size)
-        ;
-    })
-    ;
-
-  var circSpec = d4('circle')
-    .merge(function(circle, d) {
-      return circle
-        .classed('polymorph', true)
-        .attr('r', d.size)
-        ;
-    })
-    ;
-
-  var triangleSpec = d4('path')
-    .merge(function(path, d) {
-      return path
-        .attr('d', d3.svg.line()
-          .x(function(pair){return pair[0];})
-          .y(function(pair){return pair[1];})
-          .interpolate('linear')([
-            [0,-d.size],
-            [d.size,d.size],
-            [-d.size,d.size]
-          ]) + 'Z'
-        )
-        ;
-    })
-
-  var polySpec = d4('g')
-    .enter(function(g, d) {
-      return g
-        .call(d3.behavior.drag()
-          .on('dragstart', function() {
-            d3.event.sourceEvent.stopPropagation();
-          })
-          .on('drag', function() {
-            d.center = [d3.event.x, d3.event.y];
-            draw();
-          })
-        )
-        .on('click', function() {
-          if (d3.event.defaultPrevented) return;
-          d.type = isCircle(d) ? 'rect' : isRect(d) ? 'triangle' : 'circle';
-          draw();
-        })
-        ;
-    })
-    .merge(function(g, d) {
-      return g.attr('transform',
-        'translate(' + d.center[0] + ',' + d.center[1] + ')'
-      )
-      .attr('fill', d.color)
-      .attr('opacity', 0.5)
-      ;
-    })
-    .child(rectSpec, function(d) { if (isRect(d)) return d; })
-    .child(circSpec, function(d) { if (isCircle(d)) return d; })
-    .child(triangleSpec, function(d) { if (isTriangle(d)) return d; })
-    ;
-
-  return d4('g')
-    .merge(function (g) {
-      return g
-        .transition()
-        .duration(20)
-        .ease(d3.ease('linear'))
-        .attr('transform',
-          'translate(' + zoom.translate()[0] + ', ' + zoom.translate()[1] + ') ' +
-          'scale(' + zoom.scale() + ')'
-        );
-    })
-    .children(polySpec)
-    ;
-}
-
-var svg = d3.select('body').append('svg').call(zoom);
-
-function draw() {
-  chartSpec().render(svg, [data]);
-}
-
-draw();
-
-});
-
+};
 </script>
+<script data-main='main' src='bower_components/requirejs/require.js' charset='utf-8'></script>
 </body>
 </html>
