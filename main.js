@@ -11,11 +11,11 @@ var shapes = seeds.map(function(n) {
   }
 });
 
+var zoom = d3.behavior.zoom();
 var svg = d3.select('body').append('svg')
   .attr('width', $(window).width())
-  .attr('height', $(window).height());
-var zoom = d3.behavior.zoom();
-zoom(svg);
+  .attr('height', $(window).height())
+  .call(zoom);
 
 var diagram = svg.draw(chartSpec, [shapes]);
 
