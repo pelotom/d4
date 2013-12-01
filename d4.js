@@ -71,6 +71,14 @@ function Spec(elemType, fields) {
   self.child = function(childSpec, childData) {
     return self.children(childSpec, childData, true);
   }
+
+  self.draw = function (sel, data, renderId) {
+    renderId = renderId || 'd4';
+
+    var sel = sel.selectAll('.' + renderId).data(data, self.key());
+    draw(self, sel, renderId);
+    return sel;
+  };
 }
 
 function doPhaseForNode(spec, phase, node, d, i) {
@@ -129,21 +137,13 @@ function drawChildren(spec, sel, renderId) {
       childData = function(data) { return singleton ? [data] : data; };
     }
 
-    return sel.draw(childSpec, childData, renderId + '-' + childIndex);
+    // Force lazy specs
+    if (isFunction(childSpec))
+      childSpec = childSpec();
+
+    return childSpec.draw(sel, childData, renderId + '-' + childIndex);
   });
 }
-
-d3.selection.prototype.draw = function(spec, data, renderId) {
-  renderId = renderId || 'd4';
-
-  // Force lazy specs
-  if (isFunction(spec))
-    spec = spec();
-
-  var sel = this.selectAll('.' + renderId).data(data, spec.key());
-  draw(spec, sel, renderId);
-  return sel;
-};
 
 // Get all nodes in a selection... annoying that d3 doesn't have this already
 d3.selection.prototype.nodes = function() {
