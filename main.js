@@ -17,13 +17,9 @@ var svg = d3.select('body').append('svg')
   .attr('height', $(window).height())
   .call(zoom);
 
-var diagram = svg.draw(chartSpec, [shapes]);
+chartSpec(zoom).draw(svg, [shapes]);
 
-zoom.on('zoom', function() {
-  diagram.redraw(false);
-});
-
-function chartSpec() {
+function chartSpec(zoom) {
   var rectSpec = d4('rect')
     .merge(function(rect, d) {
       return rect
@@ -94,6 +90,11 @@ function chartSpec() {
     ;
 
   var chart = d4('g')
+    .enter(function (g) {
+      zoom.on('zoom', function() {
+        g.redraw(false);
+      });
+    })
     .merge(function (g) {
       return g
         .attr('transform',
