@@ -91,11 +91,10 @@ function draw(spec, sel, renderId) {
   
   var enter = sel.enter().append(spec.elemType())
     .classed(renderId, true)
-    .each(function(d, i) {
+    .each(function(_, i) {
       this['__d4_data__'] = {
         spec: spec,
         renderId: renderId,
-        datum: d,
         index: i
       };
     })
@@ -165,10 +164,10 @@ d3.selection.prototype.redraw = function(deep) {
   deep = isUndefined(deep) ? true : deep;
 
   this.each(function() {
-    var d4Data = this['__d4_data__'];
     var self = this;
+    var d4Data = self['__d4_data__'];
     ['update', 'merge'].forEach(function(phase) {
-      doPhaseForNode(d4Data.spec, phase, self, d4Data.datum, d4Data.index);
+      doPhaseForNode(d4Data.spec, phase, self, self['__data__'], d4Data.index);
     });
     if (deep)
       drawChildren(d4Data.spec, d3.selectAll([this]), d4Data.renderId);
